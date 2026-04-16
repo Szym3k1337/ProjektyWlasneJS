@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Kółko i Krzyżyk</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <section style="display: flex; justify-content:center; align-items: center; width:25%">
+    <h1 class="title">Gracz X: </h1>
+    <p id="xScore" style="font-size: 24px; color: white; margin-left: 10px;">0</p>
+  </section>
+  <h1 class="title">Kółko i Krzyżyk</h1>
+  <section style="display: flex; justify-content:center; align-items: center; width:25%">
+    <h1 class="title">Gracz O: </h1>
+    <p id="oScore" style="font-size: 24px; color: white; margin-left: 10px;">0</p>
+  </section>
+</header>
+
+<main>
+  <section class="game-section">
+    <button id="startNewGame" type="button" style="margin-bottom: 20px; padding: 10px 20px; cursor: pointer; opacity: 0;">Zagraj ponownie</button>
+
+    <div class="game-board">
+      <div class="game-square" id="gs1"></div>
+      <div class="game-square" id="gs2"></div>
+      <div class="game-square" id="gs3"></div>
+      <div class="game-square" id="gs4"></div>
+      <div class="game-square" id="gs5"></div>
+      <div class="game-square" id="gs6"></div>
+      <div class="game-square" id="gs7"></div>
+      <div class="game-square" id="gs8"></div>
+      <div class="game-square" id="gs9"></div>
+    </div>
+  </section>
+
+  <section class="reasult-section">
+    <article>
+      <h2 id="title-shift">Tura:</h2>
+      <p id="shift" style="font-size: 20px; color: #eee; text-align: center;"></p>
+    </article>
+  </section>
+</main>
+
+<script>
+  /* --- ZMIENNE --- */
+  let moves = 0;
+  let shift = 1; // 1 dla X, 2 dla O
+  let gameActive = true;
+  let winner = null;
+
+  const xScoreLabel = document.getElementById("xScore");
+  const oScoreLabel = document.getElementById("oScore");
+  const titleShift = document.getElementById("title-shift");
+  const shiftLabel = document.getElementById("shift");
+  const squares = document.querySelectorAll(".game-square");
+  const btnReset = document.getElementById("startNewGame");
+
+  const winningCombos = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8], // Poziomy
+    [0, 3, 6], [1, 4, 7], [2, 5, 8], // Piony
+    [0, 4, 8], [2, 4, 6]             // Skosy
+  ];
+
+  /* --- INICJALIZACJA --- */
+  squares.forEach(square => {
+    square.addEventListener("click", handleSquareClick);
+  });
+
+  btnReset.addEventListener("click", newGame);
+
+  /* --- FUNKCJE --- */
+
+  function checkShift() {
+    if (!gameActive) return;
+    if (shift === 1) {
+      shiftLabel.textContent = "Gracz X";
+    } else {
+      shiftLabel.textContent = "Gracz O";
+    }
+  }
+
+  function handleSquareClick(event) {
+    if (!gameActive) return;
+
+    let clickedSquare = event.target;
+
+    if (clickedSquare.textContent === "") {
+      moves++;
+      if (shift === 1) {
+        clickedSquare.textContent = "x";
+        checkWin();
+        if (gameActive) {
+          shift = 2;
+        }
+      } else {
+        clickedSquare.textContent = "o";
+        checkWin();
+        if (gameActive) {
+          shift = 1;
+        }
+      }
+
+      // Sprawdzenie remisu
+      if (gameActive && moves === 9) {
+        gameActive = false;
+        informAboutWinner("remis");
+      }
+
+      checkShift();
+    }
+  }
+
+  function checkWin() {
+    winningCombos.forEach(combo => {
+      let a = combo[0];
+      let b = combo[1];
+      let c = combo[2];
+
+      if (
+              squares[a].textContent !== "" &&
+              squares[a].textContent === squares[b].textContent &&
+              squares[a].textContent === squares[c].textContent
+      ) {
+        gameActive = false;
+        winner = squares[a].textContent.toUpperCase();
+
+        // Dodawanie punktów
+        if (winner === "X") {
+          xScoreLabel.textContent = parseInt(xScoreLabel.textContent) + 1;
+        } else {
+          oScoreLabel.textContent = parseInt(oScoreLabel.textContent) + 1;
+        }
+
+        informAboutWinner(winner);
+      }
+    });
+  }
+
+  function informAboutWinner(result) {
+    if (result === "remis") {
+      titleShift.textContent = "Koniec gry:";
+      shiftLabel.textContent = "Mamy remis!";
+    } else {
+      titleShift.textContent = "Zwycięzca:";
+      shiftLabel.textContent = "Gracz " + result;
+    }
+    btnReset.style.opacity = "1";
+  }
+
+  function newGame() {
+    gameActive = true;
+    moves = 0;
+    shift = 1;
+    winner = null;
+
+    titleShift.textContent = "Tura:";
+    btnReset.style.opacity = "0";
+
+    squares.forEach(square => {
+      square.textContent = "";
+    });
+
+    checkShift();
+  }
+
+  // Uruchomienie napisu tury na start
+  checkShift();
+
+</script>
+</body>
+</html>
