@@ -7,18 +7,25 @@
 </head>
 <body>
 <header>
-  <section style="display: flex; justify-content:center; align-items: center; width:25%">
-    <h1 class="title">Gracz X: </h1>
-    <p id="xScore" style="font-size: 24px; color: white; margin-left: 10px;">0</p>
-  </section>
+
   <h1 class="title">Kółko i Krzyżyk</h1>
-  <section style="display: flex; justify-content:center; align-items: center; width:25%">
-    <h1 class="title">Gracz O: </h1>
-    <p id="oScore" style="font-size: 24px; color: white; margin-left: 10px;">0</p>
-  </section>
+
+
 </header>
 
 <main>
+  <section class="gamemode-section">
+    <form id="gamemode-form" class="gamemode-form">
+      <h2>Tryb gry :</h2>
+      <select class="select-gamemode" id="select-gamemode">
+        <option class="gamemode">Gracz vs Gracz</option>
+        <option class="gamemode">Gracz vs Bot łatwy</option>
+        <option class="gamemode">Gracz vs Bot średni</option>
+        <option class="gamemode">Gracz vs Bot trudny</option>
+        <option class="gamemode">Gracz vs Bot niepokonany</option>
+      </select>
+    </form>
+  </section>
   <section class="game-section">
     <button id="startNewGame" type="button" style="margin-bottom: 20px; padding: 10px 20px; cursor: pointer; opacity: 0;">Zagraj ponownie</button>
 
@@ -36,10 +43,18 @@
   </section>
 
   <section class="reasult-section">
-    <article>
+    <section class="slice-reasult">
       <h2 id="title-shift">Tura:</h2>
-      <p id="shift" style="font-size: 20px; color: #eee; text-align: center;"></p>
-    </article>
+      <p id="shift" style="font-size: 18px; color: #eee; text-align: center;"></p>
+    </section>
+    <section class="slice-reasult">
+      <h2 class="title">Gracz X: </h2>
+      <p id="xScore" style="font-size: 18px; color: white; margin-left: 10px;">0</p>
+    </section>
+    <section class="slice-reasult">
+      <h2 class="title">Gracz O: </h2>
+      <p id="oScore" style="font-size: 18px; color: white; margin-left: 10px;">0</p>
+    </section>
   </section>
 </main>
 
