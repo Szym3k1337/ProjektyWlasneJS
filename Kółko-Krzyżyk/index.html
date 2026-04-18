@@ -78,10 +78,12 @@
     level:0,
     name:`ticTacToe bot`
   }
+  let virtualGameActive = false;
+  let virtualWinner = null;
   const winningCombos = [
     [0, 1, 2], [3, 4, 5], [6, 7, 8],
     [0, 3, 6], [1, 4, 7], [2, 5, 8],
-    [0, 4, 8], [2, 4, 6]             
+    [0, 4, 8], [2, 4, 6]
   ];
 
   /* --- INICJALIZACJA --- */
@@ -96,6 +98,9 @@
   });
 
   /* --- FUNKCJE --- */
+  function getActualBoard() {
+    return Array.from(squares).map(square => square.textContent);
+  }
   function checkGamemode() {
     gamemode = selectGamemode.value;
     if (gamemode !== "Gracz") {
@@ -132,78 +137,65 @@
 
   function handleSquareClick(event) {
     let clickedSquare = event.target;
-    
+
     if (!gameActive || clickedSquare.textContent !== "") return;
 
-    if (gamemode === "Gracz") {
-      // TRYB PvP
-      moves++;
-      if (shift === 1) {
-        clickedSquare.textContent = "x";
-        checkWin();
-        if (gameActive) shift = 2;
-      } else {
-        clickedSquare.textContent = "o";
-        checkWin();
-        if (gameActive) shift = 1;
-      }
-    }
-    else {
-      // TRYB Z BOTEM
-      // Ruch gracza (zawsze X)
-      clickedSquare.textContent = "x";
-      moves++;
-      checkWin();
+    // Wykonaj ruch gracza
+    clickedSquare.textContent = (gamemode === "Gracz" && shift === 2) ? "o" : "x";
+    moves++;
 
-      if (gameActive) {
-        shift = 2;
-        checkShift();
+    // SPRAWDZANIE WYGRANEJ PO RUCHU GRACZA
+    let gameResult = checkWin(getActualBoard());
 
-        // Wybór poziomu bota
-        if (bot.level === 1) {
-          setTimeout(() => {
-            easyBotMove();
-          }, 500);
-        }
-        else if (bot.level === 2) {
-          setTimeout(() => {
-            mediumBotMove();
-          },500);
-        }
-      }
+    if (gameResult) {
+      processWin(gameResult); // Wywołujemy nową funkcję obsługi wygranej
+      return; // Kończymy funkcję, bo ktoś wygrał
     }
-    
-    if (gameActive && moves === 9) {
+
+    // Sprawdzanie remisu
+    if (moves === 9) {
       gameActive = false;
       informAboutWinner("remis");
+      return;
     }
 
-    checkShift();
+    // LOGIKA TURY / BOTA
+    if (gamemode === "Gracz") {
+      shift = (shift === 1) ? 2 : 1;
+      checkShift();
+    } else {
+      // Jeśli gramy z botem i nikt nie wygrał
+      shift = 2;
+      checkShift();
+
+      let botLevel = bot.level;
+      setTimeout(() => {
+        if (botLevel === 1) easyBotMove();
+        if (botLevel === 2) mediumBotMove();
+        // Tutaj w przyszłości dopiszesz poziom 3
+      }, 500);
+    }
+  }
+  function processWin(winnerSymbol) {
+    gameActive = false;
+    if (winnerSymbol === "X") {
+      xScoreLabel.textContent = parseInt(xScoreLabel.textContent) + 1;
+    } else if (winnerSymbol === "O") {
+      oScoreLabel.textContent = parseInt(oScoreLabel.textContent) + 1;
+    }
+    informAboutWinner(winnerSymbol);
   }
 
-  function checkWin() {
-    winningCombos.forEach(combo => {
-      let a = combo[0];
-      let b = combo[1];
-      let c = combo[2];
+  function checkWin(board) {
+    // board to będzie tablica 9 elementów, np. ["x", "", "o", ...]
+    for (let combo of winningCombos) {
+      let [a, b, c] = combo;
 
-      if (
-              squares[a].textContent !== "" &&
-              squares[a].textContent === squares[b].textContent &&
-              squares[a].textContent === squares[c].textContent
-      ) {
-        gameActive = false;
-        winner = squares[a].textContent.toUpperCase();
-        
-        if (winner === "X") {
-          xScoreLabel.textContent = parseInt(xScoreLabel.textContent) + 1;
-        } else {
-          oScoreLabel.textContent = parseInt(oScoreLabel.textContent) + 1;
-        }
-
-        informAboutWinner(winner);
+      if (board[a] !== "" && board[a] === board[b] && board[a] === board[c]) {
+        return board[a].toUpperCase(); // Zwraca "X" lub "O" jeśli ktoś wygrał
       }
-    });
+    }
+    return null; // Nikt nie wygrał
   }
 
   function informAboutWinner(result) {
@@ -239,7 +231,7 @@
   }
   function easyBotMove() {
     let emptySquares = [];
-    
+
     squares.forEach((square, index) => {
       if (square.textContent === "") {
         emptySquares.push(index);
@@ -247,14 +239,23 @@
     });
 
     if (emptySquares.length > 0) {
-      
+
       let randomIndex = random(0, emptySquares.length);
       let chosenSquareIndex = emptySquares[randomIndex];
-      
+
       squares[chosenSquareIndex].textContent = "o";
 
       moves++;
-      checkWin();
+      let botResult = checkWin(getActualBoard());
+      if (botResult) {
+        processWin(botResult);
+      } else if (moves === 9) {
+        gameActive = false;
+        informAboutWinner("remis");
+      } else {
+        shift = 1;
+        checkShift();
+      }
       if (gameActive) {
         shift = 1;
         checkShift();
@@ -272,7 +273,7 @@
       let valA = squares[a].textContent;
       let valB = squares[b].textContent;
       let valC = squares[c].textContent;
-      
+
         if (valA !== "" && valA === valB && valC === "" && valA === symbol) {
           moveFound = c;
         }
@@ -297,7 +298,16 @@
 
       squares[bestMove].textContent = "o";
       moves++;
-      checkWin();
+      let botResult = checkWin(getActualBoard());
+      if (botResult) {
+        processWin(botResult);
+      } else if (moves === 9) {
+        gameActive = false;
+        informAboutWinner("remis");
+      } else {
+        shift = 1;
+        checkShift();
+      }
       if (gameActive) {
         shift = 1;
         checkShift();
