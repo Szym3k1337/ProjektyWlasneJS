@@ -18,16 +18,16 @@
     <form id="gamemode-form" class="gamemode-form">
       <h2>Tryb gry :</h2>
       <select class="select-gamemode" id="select-gamemode">
-        <option class="gamemode">Gracz vs Gracz</option>
-        <option class="gamemode">Gracz vs Bot łatwy</option>
-        <option class="gamemode">Gracz vs Bot średni</option>
-        <option class="gamemode">Gracz vs Bot trudny</option>
-        <option class="gamemode">Gracz vs Bot niepokonany</option>
+        <option class="gamemode" value="Gracz">Gracz vs Gracz</option>
+        <option class="gamemode" value="Łatwy">Gracz vs Bot łatwy</option>
+        <option class="gamemode" value="Średni">Gracz vs Bot średni</option>
+        <option class="gamemode" value="Trudny">Gracz vs Bot trudny</option>
+        <option class="gamemode" value="Niepokonany">Gracz vs Bot niepokonany</option>
       </select>
     </form>
   </section>
   <section class="game-section">
-    <button id="startNewGame" type="button" style="margin-bottom: 20px; padding: 10px 20px; cursor: pointer; opacity: 0;">Zagraj ponownie</button>
+    <button id="startGame" type="button" style="margin-bottom: 20px; padding: 10px 20px; cursor: pointer; opacity: 1;">Zagraj</button>
 
     <div class="game-board">
       <div class="game-square" id="gs1"></div>
@@ -61,8 +61,8 @@
 <script>
   /* --- ZMIENNE --- */
   let moves = 0;
-  let shift = 1; // 1 dla X, 2 dla O
-  let gameActive = true;
+  let shift = 1;
+  let gameActive = false;
   let winner = null;
 
   const xScoreLabel = document.getElementById("xScore");
@@ -70,23 +70,57 @@
   const titleShift = document.getElementById("title-shift");
   const shiftLabel = document.getElementById("shift");
   const squares = document.querySelectorAll(".game-square");
-  const btnReset = document.getElementById("startNewGame");
-
+  const btnGame = document.getElementById("startGame");
+  let selectGamemode = document.getElementById("select-gamemode");
+  let gamemode = selectGamemode.value;
+  let botActive = false;
+  let  bot = {
+    level:0,
+    name:`ticTacToe bot`
+  }
   const winningCombos = [
-    [0, 1, 2], [3, 4, 5], [6, 7, 8], // Poziomy
-    [0, 3, 6], [1, 4, 7], [2, 5, 8], // Piony
-    [0, 4, 8], [2, 4, 6]             // Skosy
+    [0, 1, 2], [3, 4, 5], [6, 7, 8],
+    [0, 3, 6], [1, 4, 7], [2, 5, 8],
+    [0, 4, 8], [2, 4, 6]             
   ];
 
   /* --- INICJALIZACJA --- */
   squares.forEach(square => {
     square.addEventListener("click", handleSquareClick);
   });
+  selectGamemode.addEventListener("change", checkGamemode);
 
-  btnReset.addEventListener("click", newGame);
+  btnGame.addEventListener("click", newGame);
+  btnGame.addEventListener("click", function() {
+    console.log("Wybrany tryb to: " + gamemode);
+  });
 
   /* --- FUNKCJE --- */
-
+  function checkGamemode() {
+    gamemode = selectGamemode.value;
+    if (gamemode !== "Gracz") {
+      botActive = true;
+    } else {
+      botActive = false;
+      bot.level = 0;
+    }
+    if (botActive) {
+      if (gamemode === "Łatwy") {
+        bot.level = 1;
+      }
+      else if (gamemode === "Średni") {
+        bot.level = 2;
+      }
+      else if (gamemode === "Trudny") {
+        bot.level = 3;
+      }
+      else if (gamemode === "Niepokonany") {
+        bot.level = 4;
+      }
+      console.log(bot.level)
+      console.log(gamemode)
+    }
+  }
   function checkShift() {
     if (!gameActive) return;
     if (shift === 1) {
@@ -97,34 +131,54 @@
   }
 
   function handleSquareClick(event) {
-    if (!gameActive) return;
-
     let clickedSquare = event.target;
+    
+    if (!gameActive || clickedSquare.textContent !== "") return;
 
-    if (clickedSquare.textContent === "") {
+    if (gamemode === "Gracz") {
+      // TRYB PvP
       moves++;
       if (shift === 1) {
         clickedSquare.textContent = "x";
         checkWin();
-        if (gameActive) {
-          shift = 2;
-        }
+        if (gameActive) shift = 2;
       } else {
         clickedSquare.textContent = "o";
         checkWin();
-        if (gameActive) {
-          shift = 1;
+        if (gameActive) shift = 1;
+      }
+    }
+    else {
+      // TRYB Z BOTEM
+      // Ruch gracza (zawsze X)
+      clickedSquare.textContent = "x";
+      moves++;
+      checkWin();
+
+      if (gameActive) {
+        shift = 2;
+        checkShift();
+
+        // Wybór poziomu bota
+        if (bot.level === 1) {
+          setTimeout(() => {
+            easyBotMove();
+          }, 500);
+        }
+        else if (bot.level === 2) {
+          setTimeout(() => {
+            mediumBotMove();
+          },500);
         }
       }
-
-      // Sprawdzenie remisu
-      if (gameActive && moves === 9) {
-        gameActive = false;
-        informAboutWinner("remis");
-      }
-
-      checkShift();
     }
+    
+    if (gameActive && moves === 9) {
+      gameActive = false;
+      informAboutWinner("remis");
+    }
+
+    checkShift();
   }
 
   function checkWin() {
@@ -140,8 +194,7 @@
       ) {
         gameActive = false;
         winner = squares[a].textContent.toUpperCase();
-
-        // Dodawanie punktów
+        
         if (winner === "X") {
           xScoreLabel.textContent = parseInt(xScoreLabel.textContent) + 1;
         } else {
@@ -161,17 +214,18 @@
       titleShift.textContent = "Zwycięzca:";
       shiftLabel.textContent = "Gracz " + result;
     }
-    btnReset.style.opacity = "1";
+    btnGame.style.opacity = "1";
+
   }
 
   function newGame() {
+    checkGamemode()
     gameActive = true;
     moves = 0;
     shift = 1;
     winner = null;
-
     titleShift.textContent = "Tura:";
-    btnReset.style.opacity = "0";
+    btnGame.style.opacity = "0";
 
     squares.forEach(square => {
       square.textContent = "";
@@ -180,9 +234,79 @@
     checkShift();
   }
 
-  // Uruchomienie napisu tury na start
-  checkShift();
+  function random(min, max) {
+    return Math.floor(Math.random() * (max - min)) + min;
+  }
+  function easyBotMove() {
+    let emptySquares = [];
+    
+    squares.forEach((square, index) => {
+      if (square.textContent === "") {
+        emptySquares.push(index);
+      }
+    });
 
+    if (emptySquares.length > 0) {
+      
+      let randomIndex = random(0, emptySquares.length);
+      let chosenSquareIndex = emptySquares[randomIndex];
+      
+      squares[chosenSquareIndex].textContent = "o";
+
+      moves++;
+      checkWin();
+      if (gameActive) {
+        shift = 1;
+        checkShift();
+      }
+    }
+  }
+
+  function findBestMove(symbol) {
+    let moveFound = null;
+    winningCombos.forEach(combo => {
+      let a = combo[0];
+      let b = combo[1];
+      let c = combo[2];
+
+      let valA = squares[a].textContent;
+      let valB = squares[b].textContent;
+      let valC = squares[c].textContent;
+      
+        if (valA !== "" && valA === valB && valC === "" && valA === symbol) {
+          moveFound = c;
+        }
+
+        else if (valB !== "" && valB === valC && valA === "" && valB === symbol) {
+          moveFound = a;
+        }
+
+        else if (valA !== "" && valA === valC && valB === "" && valA === symbol) {
+          moveFound = b;
+        }
+      });
+
+    return moveFound;
+  }
+  function mediumBotMove() {
+    let bestMove = findBestMove("o");
+    if (bestMove === null) {
+      bestMove = findBestMove("x");
+    }
+    if (bestMove !== null) {
+
+      squares[bestMove].textContent = "o";
+      moves++;
+      checkWin();
+      if (gameActive) {
+        shift = 1;
+        checkShift();
+      }
+    } else {
+
+      easyBotMove();
+    }
+  }
 </script>
 </body>
 </html>
