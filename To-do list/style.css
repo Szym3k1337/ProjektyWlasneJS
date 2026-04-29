@@ -24,8 +24,8 @@ header h1 {
 }
 .to-do-list {
     display: flex;
-    flex-direction: column; /* Zadania w kolumnie */
-    list-style: none; /* Usuwamy kropki */
+    flex-direction: column;
+    list-style: none;
     padding: 0;
 }
 .todo-item {
@@ -45,7 +45,7 @@ header h1 {
 }
 
 .class-text {
-    flex-grow: 1; /* Tekst zajmie całą wolną przestrzeń */
+    flex-grow: 1;
     cursor: pointer;
     margin-right: 1rem;
 }
